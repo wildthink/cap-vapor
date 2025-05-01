@@ -1,5 +1,5 @@
 {
-  "originHash" : "d288f2af9dc40fc01437202845aea8c313c34ff7a64207de1cfebff2f41137e2",
+  "originHash" : "d2aeaa18f2f1b7885756257f1547f084967147b90245fe965e21f2d557444b5b",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -123,8 +123,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-container-plugin",
       "state" : {
-        "revision" : "1d1fac56025511e686efd503b02043b1726596b2",
-        "version" : "0.5.0"
+        "revision" : "ca3c6383e8ef2b8122066f0438bf5d481e9aec0e",
+        "version" : "1.0.1"
       }
     },
     {
