@@ -22,21 +22,40 @@ enum Entrypoint {
         let env = try Environment.detect()
         let app = try await Application.make(env)
         app.http.server.configuration.hostname = "0.0.0.0"
-        app.http.server.configuration.port = 8080
+        app.http.server.configuration.port = 8080 // 443 8443
 
+        // TLS configuration
+        let certPath = "/Users/jason/.certs/clarke.local.pem"
+        let keyPath = "/Users/jason/.certs/clarke.local-key.pem"
+
+//        app.http.server.configuration.hostname = "localhost"
+        // if HTTPS
+        app.http.server.configuration.port = 443
+        app.http.server.configuration.tlsConfiguration = .makeServerConfiguration(
+            certificateChain: [.certificate(try .init(file: certPath, format: .pem))],
+            privateKey: .privateKey(try .init(file: keyPath, format: .pem)))
+//            privateKey: .file(keyPath))
+//            .forServer(certificateChain: [.certificate(.file(certPath))], privateKey: .file(keyPath))
+        
         
 //        for (k, v) in ProcessInfo.processInfo.environment {
 //            print("\(k): \(v)")
 //        }
-        let connection = try await SQLiteConnection.open(storage: .memory)
-        app.database.connection = connection
+//        let connection = try await SQLiteConnection.open(storage: .memory)
+//        app.database.connection = connection
+
+//        app.middleware.use(Tracer())
+        let aasa = AASAMiddleware()
+        app.middleware.use(aasa)
 
         // Serves files from `Public/` directory
+        app.directory.publicDirectory = "/Users/jason/dev/site"
         let fileMiddleware = FileMiddleware(
             publicDirectory: "/Users/jason/dev/site"
 //            publicDirectory: app.directory.publicDirectory
         )
         app.middleware.use(fileMiddleware)
+        
         
         do {
             try await configure(app)
@@ -69,3 +88,24 @@ extension Application {
     }
 }
 
+final class Tracer: AsyncMiddleware {
+    func respond(to request: Vapor.Request, chainingTo next: any Vapor.AsyncResponder) async throws -> Vapor.Response {
+        let response = try await next.respond(to: request)
+        print("TRACE: \(request.url)")
+        return response
+    }
+}
+
+final class AASAMiddleware: AsyncMiddleware {
+    func respond(to request: Vapor.Request, chainingTo next: any Vapor.AsyncResponder) async throws -> Vapor.Response {
+        let response = try await next.respond(to: request)
+//        print("AASA: \(request.url)")
+        if request.url.path == "/.well-known/apple-app-site-association" {
+            response.headers.replaceOrAdd(name: .contentType, value: "application/json")
+        }
+        if request.url.path.hasSuffix(".json") {
+            response.headers.replaceOrAdd(name: .contentType, value: "application/json")
+        }
+        return response
+    }
+}
